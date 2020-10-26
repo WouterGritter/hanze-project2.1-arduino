@@ -25,9 +25,9 @@ int main(void)
 void initialize() {
 	initializeMillis();
 	
-	setPBMode(PIN_PB_LED_CLOSED, OUTPUT);
-	setPBMode(PIN_PB_LED_CHANGING, OUTPUT);
-	setPBMode(PIN_PB_LED_OPENED, OUTPUT);
+	pbMode(PIN_PB_LED_CLOSED, OUTPUT);
+	pbMode(PIN_PB_LED_CHANGING, OUTPUT);
+	pbMode(PIN_PB_LED_OPENED, OUTPUT);
 }
 
 void start() {
@@ -67,7 +67,7 @@ void updateLeds() {
 			break;
 	}
 	
-	setPB(PIN_PB_LED_CLOSED, closedLED);
-	setPB(PIN_PB_LED_CHANGING, changingLED);
-	setPB(PIN_PB_LED_OPENED, openedLED);
+	pbWrite(PIN_PB_LED_CLOSED, closedLED);
+	pbWrite(PIN_PB_LED_CHANGING, changingLED);
+	pbWrite(PIN_PB_LED_OPENED, openedLED);
 }

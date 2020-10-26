@@ -5,19 +5,25 @@
  *  Author: woute
  */ 
 
+#include <avr/io.h>
+#include <stdbool.h>
+
 
 #ifndef FUNCTIONS_H_
 #define FUNCTIONS_H_
 
-#include <avr/io.h>
-#include <stdbool.h>
 
-#define OUTPUT 0
-#define INPUT 1
+#define INPUT 0
+#define OUTPUT 1
 
-void setPBMode(uint8_t pin, uint8_t mode);
+#define LOW 0
+#define HIGH 1
 
-void setPB(uint8_t pin, bool state);
+void pbMode(uint8_t pin, bool mode);
+
+void pbWrite(uint8_t pin, bool state);
+
+bool pbRead(uint8_t pin);
 
 
 #endif /* FUNCTIONS_H_ */
