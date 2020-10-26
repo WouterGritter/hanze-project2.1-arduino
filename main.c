@@ -1,12 +1,17 @@
+#include "settings.h"
+
 #include <avr/io.h>
 #include <stdbool.h>
+#include <util/delay.h>
 #include "util/millis.h"
 #include "util/functions.h"
 
+#include "util/tm1638.h"
 
-#define PIN_PB_LED_CLOSED   0 // PB0
-#define PIN_PB_LED_CHANGING 1 // PB1
-#define PIN_PB_LED_OPENED   2 // PB2
+// Pins
+#define PIN_PB_LED_CLOSED   0 // PB0 (pin 8)
+#define PIN_PB_LED_CHANGING 1 // PB1 (pin 9)
+#define PIN_PB_LED_OPENED   2 // PB2 (pin 10)
 
 #define CLOSED 0
 #define OPENED 1
@@ -14,6 +19,11 @@
 #define OPENING 3
 
 uint8_t state = OPENING;
+
+int main(void);
+void initialize();
+void start();
+void updateLeds();
 
 int main(void)
 {
@@ -24,6 +34,7 @@ int main(void)
 
 void initialize() {
 	initializeMillis();
+	tm1638_setup();
 	
 	pbMode(PIN_PB_LED_CLOSED, OUTPUT);
 	pbMode(PIN_PB_LED_CHANGING, OUTPUT);
@@ -31,8 +42,16 @@ void initialize() {
 }
 
 void start() {
+	unsigned long num = 0;
 	while(1) {
-		updateLeds();		
+		// -- TEST DISPLAY --
+		tm1638_leds = num;
+		tm1638_writeNum(num, 10);
+		
+		num++;
+		
+		tm1638_update();
+		// ----
 		
 		// simulate changing from state:
 		// closed > opening > open > closing > .. (repeat)
@@ -46,6 +65,9 @@ void start() {
 		}else if(m > 0) {
 			state = CLOSING;
 		}
+		
+		// Update the leds based on the state
+		updateLeds();
 	}
 }
 
