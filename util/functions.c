@@ -17,6 +17,23 @@ void pbMode(uint8_t pin, bool mode) {
 	}
 }
 
+void pcMode(uint8_t pin, bool mode) {
+	if(mode) {
+		DDRC |= (1 << pin);
+	}else {
+		DDRC &= ~(1 << pin);
+	}
+}
+
+void pdMode(uint8_t pin, bool mode) {
+	if(mode) {
+		DDRD |= (1 << pin);
+	}else {
+		DDRD &= ~(1 << pin);
+	}
+}
+
+
 void pbWrite(uint8_t pin, bool state) {
 	if(state) {
 		// On
@@ -27,6 +44,35 @@ void pbWrite(uint8_t pin, bool state) {
 	}
 }
 
+void pcWrite(uint8_t pin, bool state) {
+	if(state) {
+		// On
+		PORTC |= (1 << pin);
+	}else{
+		// Off
+		PORTC &= ~(1 << pin);
+	}
+}
+
+void pdWrite(uint8_t pin, bool state) {
+	if(state) {
+		// On
+		PORTD |= (1 << pin);
+	}else{
+		// Off
+		PORTD &= ~(1 << pin);
+	}
+}
+
+
 bool pbRead(uint8_t pin) {
 	return PINB & (1 << pin);
+}
+
+bool pcRead(uint8_t pin) {
+	return PINC & (1 << pin);
+}
+
+bool pdRead(uint8_t pin) {
+	return PIND & (1 << pin);
 }
