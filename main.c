@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <util/delay.h>
 #include "util/millis.h"
-#include "util/functions.h"
+#include "util/pins.h"
 
 #include "util/tm1638.h"
 

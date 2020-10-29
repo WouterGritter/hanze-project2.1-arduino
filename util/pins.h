@@ -1,5 +1,5 @@
 /*
- * functions.h
+ * pins.h
  *
  * Created: 26-10-2020 11:09:59
  *  Author: woute
@@ -9,8 +9,8 @@
 #include <stdbool.h>
 
 
-#ifndef FUNCTIONS_H_
-#define FUNCTIONS_H_
+#ifndef PINS_H_
+#define PINS_H_
 
 
 #define INPUT 0
@@ -32,4 +32,4 @@ bool pcRead(uint8_t pin);
 bool pdRead(uint8_t pin);
 
 
-#endif /* FUNCTIONS_H_ */
+#endif /* PINS_H_ */

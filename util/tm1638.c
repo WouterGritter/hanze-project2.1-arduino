@@ -8,7 +8,7 @@
 #include "tm1638.h"
 
 #include "../settings.h"
-#include "functions.h"
+#include "pins.h"
 #include <avr/io.h>
 
 #define PIN_PB_TM1638_DATA   3 // PB3 (pin 11)
