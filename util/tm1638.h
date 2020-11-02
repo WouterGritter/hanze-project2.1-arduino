@@ -44,7 +44,7 @@ static int SEG_DIGITS[] = {
 	SEG_A | SEG_E | SEG_F | SEG_G,                         // F
 };
 
-void tm1638_setup();
+void tm1638_init();
 void tm1638_reset();
 
 int tm1638_readButtons();

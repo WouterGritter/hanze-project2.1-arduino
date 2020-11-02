@@ -3,10 +3,11 @@
 #include <avr/io.h>
 #include <stdbool.h>
 #include <util/delay.h>
+
 #include "util/millis.h"
 #include "util/pins.h"
-
 #include "util/tm1638.h"
+#include "util/serial.h"
 
 // Pins
 #define PIN_PB_LED_CLOSED   0 // PB0 (pin 8)
@@ -15,60 +16,113 @@
 
 #define CLOSED 0
 #define OPENED 1
-#define CLOSING 2
-#define OPENING 3
 
-uint8_t state = OPENING;
+uint8_t state = OPENED;
+float temperature = 21.5;
+int light = 123;
 
 int main(void);
 void initialize();
 void start();
+void readCommand();
 void updateLeds();
 
-int main(void)
-{
+int main(void) {
 	initialize();
 	
 	start();
 }
 
 void initialize() {
-	initializeMillis();
-	tm1638_setup();
+	serial_init();
+	millis_init();
+	tm1638_init();
 	
 	pbMode(PIN_PB_LED_CLOSED, OUTPUT);
 	pbMode(PIN_PB_LED_CHANGING, OUTPUT);
 	pbMode(PIN_PB_LED_OPENED, OUTPUT);
 }
 
+unsigned long lastStateSend = 0;
+
 void start() {
+	serial_puts("<OK>");
+	
 	unsigned long num = 0;
 	while(1) {
-		// -- TEST DISPLAY --
-		tm1638_leds = num;
-		tm1638_writeNum(num, 10);
+		// Read incoming commands
+		readCommand();
 		
-		num++;
-		
-		tm1638_update();
-		// ----
-		
-		// simulate changing from state:
-		// closed > opening > open > closing > .. (repeat)
-		int m = millis() % 10000;
-		if(m > 7500) {
-			state = CLOSED;
-		}else if(m > 5000) {
-			state = OPENING;
-		}else if(m > 2500) {
-			state = OPENED;
-		}else if(m > 0) {
-			state = CLOSING;
+		if(millis() - lastStateSend > 1000) {
+			// Send the current state
+			sendState();
+			lastStateSend = millis();
 		}
 		
-		// Update the leds based on the state
+		// Update the LEDs based on the state
 		updateLeds();
 	}
+}
+
+void readCommand() {
+	char c = serial_getc(1);
+	if(c == '<') {
+		uint8_t bufSize = 32;
+		char buf[bufSize];
+		
+		uint8_t index = 0;
+		while(1) {
+			c = serial_getc(1000);
+			if(c == 0 || c == '>') {
+				break;
+			}
+			
+			buf[index++] = c;
+		}
+		
+		if(buf[0] == 'S') {
+			// Set the state
+			switch(buf[1]) {
+				case 'c': // closed
+				state = CLOSED;
+				break;
+				case 'o': // opened
+				state = OPENED;
+				break;
+			}
+		}
+
+		// Echo the command!
+		serial_puts("<E");
+		for(int i = 0; i < index; i++) {
+			serial_putc(buf[i]);
+		}
+		serial_putc('>');
+	}
+}
+
+void sendState() {
+	// STATE
+	serial_puts("<S");
+	switch(state) {
+		case CLOSED:
+			serial_putc('c');
+			break;
+		case OPENED:
+			serial_putc('o');
+			break;
+	}
+	serial_putc('>');
+	
+	// TEMPERATURE
+	serial_puts("<T");
+	serial_putU16(temperature * 100.0);
+	serial_putc('>');
+	
+	// LIGHT
+	serial_puts("<L");
+	serial_putU16(light);
+	serial_putc('>');
 }
 
 void updateLeds() {
@@ -83,10 +137,10 @@ void updateLeds() {
 		case OPENED:
 			openedLED = true;
 			break;
-		case CLOSING:
-		case OPENING:
-			changingLED = (millis() % 1000) > 500;
-			break;
+//		case CLOSING:
+//		case OPENING:
+//			changingLED = (millis() % 1000) > 500;
+//			break;
 	}
 	
 	pbWrite(PIN_PB_LED_CLOSED, closedLED);

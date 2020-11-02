@@ -37,7 +37,7 @@ ISR(TIMER0_OVF_vect) {
 	timer0_overflow_count++;
 }
 
-void initializeMillis() {
+void millis_init() {
 	DDRB |= (1<<0);
 	TCNT0 = 0;
 	count = 0;

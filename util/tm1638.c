@@ -50,7 +50,7 @@ void tm1638_sendCommand(uint8_t value) {
 	pbWrite(PIN_PB_TM1638_STROBE, HIGH);
 }
 
-void tm1638_setup() {
+void tm1638_init() {
 	pbMode(PIN_PB_TM1638_DATA, OUTPUT);
 	pbMode(PIN_PB_TM1638_CLOCK, OUTPUT);
 	pbMode(PIN_PB_TM1638_STROBE, OUTPUT);

@@ -10,7 +10,7 @@
 #define MILLIS_H_
 
 
-void initializeMillis();
+void millis_init();
 unsigned long millis();
 
 
