@@ -18,14 +18,29 @@
 #define OPENED 1
 
 uint8_t state = OPENED;
-float temperature = 21.5;
-int light = 123;
+float temperature = 0.0;
+int light = 0;
 
 int main(void);
 void initialize();
 void start();
 void readCommand();
 void updateLeds();
+
+/* PINOUT
+ *
+ * A0: light sensor (with 10k resistor)
+ * A1: temperature sensor
+ *
+ * 8:  closed (red) LED
+ * 9:  changing (orange) LED
+ * 10: opened (green) LED
+ *
+ * 11: tm1638 data (DIO)
+ * 12: tm1638 clock (CLK)
+ * 13: tm1638 strobe (STB)
+ *
+ */
 
 int main(void) {
 	initialize();
@@ -41,6 +56,9 @@ void initialize() {
 	pbMode(PIN_PB_LED_CLOSED, OUTPUT);
 	pbMode(PIN_PB_LED_CHANGING, OUTPUT);
 	pbMode(PIN_PB_LED_OPENED, OUTPUT);
+	
+	// Enable the ADC and set the prescaler to max value (128)
+	ADCSRA = 0b10000111;
 }
 
 unsigned long lastStateSend = 0;
@@ -50,10 +68,23 @@ void start() {
 	
 	unsigned long num = 0;
 	while(1) {
+		uint8_t buttons = tm1638_readButtons();
+		if(buttons & (1 << 0)) {
+			// Open!
+			state = OPENED;
+		}else if(buttons & (1 << 1)) {
+			// Close!
+			state = CLOSED;
+		}
+		
+		// Read sensors
+		readTemperatureSensor();
+		readLightSensor();
+		
 		// Read incoming commands
 		readCommand();
-		
-		if(millis() - lastStateSend > 1000) {
+				
+		if(millis() - lastStateSend > 250) {
 			// Send the current state
 			sendState();
 			lastStateSend = millis();
@@ -116,13 +147,39 @@ void sendState() {
 	
 	// TEMPERATURE
 	serial_puts("<T");
-	serial_putU16(temperature * 100.0);
+	serial_putU16(temperature * 10.0);
 	serial_putc('>');
 	
 	// LIGHT
 	serial_puts("<L");
 	serial_putU16(light);
 	serial_putc('>');
+}
+
+void readLightSensor() {
+	// Configure ADC to be right justified (10 bit), use AVCC as reference, and select ADC0 as ADC input
+	ADMUX = 0b01000000;
+
+	// Start an ADC conversion by setting ADSC bit (bit 6)
+	ADCSRA = ADCSRA | (1 << ADSC);
+			
+	// Wait until the ADSC bit has been cleared
+	while(ADCSRA & (1 << ADSC));
+	
+	light = ADC;
+}
+
+void readTemperatureSensor() {
+	// Configure ADC to be right justified (10 bit), use AVCC as reference, and select ADC1 as ADC input
+	ADMUX = 0b01000001;
+
+	// Start an ADC conversion by setting ADSC bit (bit 6)
+	ADCSRA = ADCSRA | (1 << ADSC);
+	
+	// Wait until the ADSC bit has been cleared
+	while(ADCSRA & (1 << ADSC));
+	
+	temperature = ((5.0 / 1023.0) * ADC) / 0.01; // 10mV per degree!
 }
 
 void updateLeds() {
