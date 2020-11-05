@@ -14,12 +14,17 @@
 #define PIN_PB_LED_CHANGING 1 // PB1 (pin 9)
 #define PIN_PB_LED_OPENED   2 // PB2 (pin 10)
 
-#define CLOSED 0
-#define OPENED 1
-
-uint8_t state = OPENED;
 float temperature = 0.0;
-int light = 0;
+int light = 1;
+int distance = 1;
+bool opened = false;
+bool automatic = false;
+
+float border_temperature = 18.0; // default
+int border_light = 500; // default
+int border_distance_open = 100; // default
+int border_distance_close = 20; // default
+
 
 int main(void);
 void initialize();
@@ -57,24 +62,22 @@ void initialize() {
 	pbMode(PIN_PB_LED_CHANGING, OUTPUT);
 	pbMode(PIN_PB_LED_OPENED, OUTPUT);
 	
-	// Enable the ADC and set the prescaler to max value (128)
+	// Enable the ADC and set the pre-scaler to max value (128)
 	ADCSRA = 0b10000111;
 }
 
-unsigned long lastStateSend = 0;
-
 void start() {
-	serial_puts("<OK>");
+	serial_puts("?OK#");
 	
 	unsigned long num = 0;
 	while(1) {
 		uint8_t buttons = tm1638_readButtons();
 		if(buttons & (1 << 0)) {
 			// Open!
-			state = OPENED;
+			opened = true;
 		}else if(buttons & (1 << 1)) {
 			// Close!
-			state = CLOSED;
+			opened = false;
 		}
 		
 		// Read sensors
@@ -83,12 +86,6 @@ void start() {
 		
 		// Read incoming commands
 		readCommand();
-				
-		if(millis() - lastStateSend > 250) {
-			// Send the current state
-			sendState();
-			lastStateSend = millis();
-		}
 		
 		// Update the LEDs based on the state
 		updateLeds();
@@ -97,63 +94,87 @@ void start() {
 
 void readCommand() {
 	char c = serial_getc(1);
-	if(c == '<') {
-		uint8_t bufSize = 32;
+	if(c == '?') { // ? is the start character
+		uint8_t bufSize = 8;
 		char buf[bufSize];
 		
 		uint8_t index = 0;
 		while(1) {
-			c = serial_getc(1000);
-			if(c == 0 || c == '>') {
+			c = serial_getc(500);
+			if(c == 0 || c == '#') { // # is the end character
 				break;
 			}
-			
+
 			buf[index++] = c;
+			if(index == bufSize) {
+				break;
+			}
 		}
 		
-		if(buf[0] == 'S') {
-			// Set the state
-			switch(buf[1]) {
-				case 'c': // closed
-				state = CLOSED;
-				break;
-				case 'o': // opened
-				state = OPENED;
-				break;
+		char type = buf[0];
+		char identifier = buf[1];
+		
+		serial_putc('?'); // ? is the start character
+		serial_putc(identifier); // Echo back the identifier
+		
+		if(type == 'G') { // Getter
+			switch(identifier) {
+				case 'T': // Temperature
+					serial_putU16(temperature * 10.0);
+					break;
+				case 'L': // Light
+					serial_putU16(light);
+					break;
+				case 'D': // Distance
+					serial_putU16(distance);
+					break;
+				case 'S': // Status
+					serial_putc(opened ? 'o' : 'c');
+					break;
+				case 'A': // Automatic mode
+					serial_putc(automatic ? 'a' : 'm');
+					break;
+				case 't': // Temperature border
+					serial_putU16(border_temperature * 10.0);
+					break;
+				case 'l': // Light border
+					serial_putU16(border_light);
+					break;
+				case 'o': // Open distance border
+					serial_putU16(border_distance_open);
+					break;
+				case 'c': // Closed distance border
+					serial_putU16(border_distance_close);
+					break;
+				default: // UNKNOWN
+					serial_puts("UNKNOWN");
+					break;
+			}
+		}else if(type == 'S') { // Setter
+			switch(identifier) {
+				case 'S': // Status
+					opened = (buf[2] == 'o');
+					break;
+				case 'A': // Automatic mode
+					automatic = (buf[2] == 'a');
+					break;
+				case 't': // Temperature border
+					border_temperature = parseInt(buf, 2) / 10.0;
+					break;
+				case 'l': // Light border
+					border_light = parseInt(buf, 2);
+					break;
+				case 'o': // Open distance border
+					border_distance_open = parseInt(buf, 2);
+					break;
+				case 'c': // Closed distance border
+					border_distance_close = parseInt(buf, 2);
+					break;
 			}
 		}
-
-		// Echo the command!
-		serial_puts("<E");
-		for(int i = 0; i < index; i++) {
-			serial_putc(buf[i]);
-		}
-		serial_putc('>');
+		
+		serial_putc('#'); // # is the end character
 	}
-}
-
-void sendState() {
-	// STATE
-	serial_puts("<S");
-	switch(state) {
-		case CLOSED:
-			serial_putc('c');
-			break;
-		case OPENED:
-			serial_putc('o');
-			break;
-	}
-	serial_putc('>');
-	
-	// TEMPERATURE
-	serial_puts("<T");
-	serial_putU16(temperature * 10.0);
-	serial_putc('>');
-	
-	// LIGHT
-	serial_puts("<L");
-	serial_putU16(light);
-	serial_putc('>');
 }
 
 void readLightSensor() {
@@ -187,17 +208,12 @@ void updateLeds() {
 	bool changingLED = false;
 	bool openedLED = false;
 	
-	switch(state) {
-		case CLOSED:
-			closedLED = true;
-			break;
-		case OPENED:
-			openedLED = true;
-			break;
-//		case CLOSING:
-//		case OPENING:
-//			changingLED = (millis() % 1000) > 500;
-//			break;
+	// TODO set changing LED
+	// changingLED = (millis() % 1000) > 500;
+	if(opened) {
+		openedLED = true;
+	}else {
+		closedLED = true;
 	}
 	
 	pbWrite(PIN_PB_LED_CLOSED, closedLED);

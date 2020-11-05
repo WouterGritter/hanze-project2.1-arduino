@@ -19,4 +19,6 @@ void serial_putU16(unsigned int val);
 
 char serial_getc(unsigned int timeout);
 
+int parseInt(char *str, int offset);
+
 #endif /* SERIAL_H_ */
