@@ -1,10 +1,3 @@
-/*
- * pins.c
- *
- * Created: 26-10-2020 11:09:59
- *  Author: woute
- */
-
 #include "pins.h"
 #include <avr/io.h>
 #include <stdbool.h>

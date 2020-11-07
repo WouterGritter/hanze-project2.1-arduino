@@ -1,11 +1,3 @@
-/*
- * tm1638.h
- *
- * Created: 26-10-2020 13:10:45
- *  Author: woute
- */ 
-
-
 #ifndef TM1638_H_
 #define TM1638_H_
 

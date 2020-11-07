@@ -1,9 +1,3 @@
-/*
- * serial.h
- *
- * Created: 29-10-2020 12:55:59
- *  Author: woute
- */ 
 #include <avr/io.h>
 
 #ifndef SERIAL_H_
@@ -17,7 +11,7 @@ void serial_puts(char* s);
 void serial_putU8(unsigned char val);
 void serial_putU16(unsigned int val);
 
-char serial_getc(unsigned int timeout);
+char serial_getc(unsigned int timeoutCount);
 
 int parseInt(char *str, int offset);
 

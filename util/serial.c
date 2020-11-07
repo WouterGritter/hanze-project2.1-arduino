@@ -11,8 +11,8 @@
 #include <util/delay.h>
 
 #include "tm1638.h"
-#include "millis.h"
 
+// Bron: http://www.rjhcoding.com/avrc-uart.php
 void serial_init() {
     // set baudrate in UBRR
     UBRR0L = (uint8_t)(103 & 0xFF);
@@ -21,6 +21,8 @@ void serial_init() {
     // enable the transmitter and receiver
     UCSR0B |= (1 << RXEN0) | (1 << TXEN0);
 }
+
+// Bron: http://www.rjhcoding.com/avrc-uart.php
 void serial_putc(unsigned char data) {
 	// wait for transmit buffer to be empty
 	_delay_us(1000);
@@ -29,11 +31,13 @@ void serial_putc(unsigned char data) {
 	UDR0 = data;
 }
 
+// Bron: http://www.rjhcoding.com/avrc-uart.php
 void serial_puts(char* s) {
 	// transmit character until NULL is reached
 	while(*s > 0) serial_putc(*s++);
 }
 
+// Bron: http://www.rjhcoding.com/avrc-uart.php
 void serial_putU8(unsigned char val) {
 	uint8_t dig1 = '0', dig2 = '0';
 
@@ -61,6 +65,7 @@ void serial_putU8(unsigned char val) {
 	serial_putc(val + '0');
 }
 
+// Bron: http://www.rjhcoding.com/avrc-uart.php
 void serial_putU16(unsigned int val) {
 	uint8_t dig1 = '0', dig2 = '0', dig3 = '0', dig4 = '0';
 
@@ -111,11 +116,12 @@ void serial_putU16(unsigned int val) {
 	serial_putc(val + '0');
 }
 
-char serial_getc(unsigned int timeout) {
-	unsigned long start = millis();
+// Bron: http://www.rjhcoding.com/avrc-uart.php
+char serial_getc(unsigned int timeoutCount) {
+	unsigned int counter = 0;
 	// wait for data
 	while(!(UCSR0A & (1 << RXC0))) {
-		if(millis() - start > timeout) {
+		if(++counter > timeoutCount) {
 			return 0;
 		}
 	}
@@ -124,6 +130,7 @@ char serial_getc(unsigned int timeout) {
 	return UDR0;
 }
 
+// Bron: https://stackoverflow.com/questions/7021725/how-to-convert-a-string-to-integer-in-c
 int parseInt(char *str, int offset) {
 	str += offset;
 	

@@ -1,9 +1,4 @@
-/*
- * tm1638.c
- *
- * Created: 26-10-2020 13:01:04
- *  Author: woute
- */ 
+// Bron: blackboard
 
 #include "tm1638.h"
 
