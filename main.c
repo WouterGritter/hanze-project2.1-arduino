@@ -9,6 +9,7 @@
 #include "util/serial.h"
 #include "util/AVR_TTC_scheduler.h"
 #include "util/distance.h"
+#include <avr/eeprom.h>
 
 // Pins
 #define PIN_PB_LED_CLOSED   0 // PB0 (pin 8)
@@ -22,14 +23,16 @@ int distance = 0;
 bool opened = false;
 bool automatic = false;
 
-float border_temperature = 25.0; // default
-int border_light = 300; // default
-int border_distance_open = 50; // default
-int border_distance_close = 10; // default
+float border_temperature = 0.0;
+int border_light = 0;
+int border_distance_open = 0;
+int border_distance_close = 0;
 
 int main(void);
 void initialize();
 void start();
+void saveToEEPROM();
+void loadFromEEPROM();
 void readCommand();
 void readTemperatureSensor();
 void readLightSensor();
@@ -75,6 +78,8 @@ int main(void) {
 
 	// Enable the ADC and set the pre-scaler to max value (128)
 	ADCSRA = 0b10000111;
+	
+	loadFromEEPROM();
 	// -- //
 	
 	
@@ -86,8 +91,8 @@ int main(void) {
 	SCH_Add_Task(readButtons, 0, 10);
 	SCH_Add_Task(readTemperatureSensor, 0, 1000);
 	SCH_Add_Task(readLightSensor, 0, 1000);
-	SCH_Add_Task(readDistanceSensor, 0, 50);
-	SCH_Add_Task(checkAutomaticStateChange, 1000, 1000);
+	SCH_Add_Task(readDistanceSensor, 0, 500);
+	SCH_Add_Task(checkAutomaticStateChange, 1000, 30000);
 
 	// Signal that we're ready for serial commands..
 	serial_puts("?OK#");
@@ -100,6 +105,47 @@ int main(void) {
 		SCH_Dispatch_Tasks();
 	}
 	// -- //
+}
+
+/*
+
+bool opened = false;
+bool automatic = false;
+
+float border_temperature = 25.0; // default
+int border_light = 300; // default
+int border_distance_open = 50; // default
+int border_distance_close = 10; // default
+*/
+void saveToEEPROM() {
+	eeprom_write_byte (0, opened);					// 1 byte
+	eeprom_write_byte (1, automatic);				// 1 byte
+	eeprom_write_float(2, border_temperature);		// 2 bytes
+	eeprom_write_word (4, border_light);			// 2 bytes
+	eeprom_write_word (6, border_distance_open);	// 2 bytes
+	eeprom_write_word (8, border_distance_close);	// 2 bytes
+}
+
+void loadFromEEPROM() {
+	opened					= eeprom_read_byte(0);	// 1 byte
+	automatic				= eeprom_read_byte(1);	// 1 byte
+	border_temperature		= eeprom_read_float(2);	// 2 bytes
+	border_light			= eeprom_read_word(4);	// 2 bytes
+	border_distance_open	= eeprom_read_word(6);	// 2 bytes
+	border_distance_close	= eeprom_read_word(8);	// 2 bytes
+	
+	// DEFAULTS
+	if(border_temperature == 0)
+		border_temperature = 25.0;
+	
+	if(border_light == 0)
+		border_light = 300;
+	
+	if(border_distance_open == 0)
+		border_distance_open = 50;
+	
+	if(border_distance_close == 0)
+		border_distance_close = 15;
 }
 
 // Reads commands from the UART and responds to them accordingly.
@@ -162,6 +208,7 @@ void readCommand() {
 					break;
 			}
 		}else if(type == 'S') { // Setter
+			bool modified = true;
 			switch(identifier) {
 				case 'S': // Status
 					opened = (buf[2] == 'o');
@@ -182,6 +229,13 @@ void readCommand() {
 				case 'c': // Closed distance border
 					border_distance_close = parseInt(buf, 2);
 					break;
+				default:
+					modified = false;
+					break;
+			}
+			
+			if(modified) {
+				saveToEEPROM();
 			}
 		}
 		
@@ -246,13 +300,19 @@ void readButtons() {
 		// Open!
 		opened = true;
 		automatic = false;
+		
+		saveToEEPROM();
 	}else if(buttons & (1 << 1)) {
 		// Close!
 		opened = false;
 		automatic = false;
+		
+		saveToEEPROM();
 	}else if(buttons & (1 << 2)) {
 		// Enable automatic mode
 		automatic = true;
+		
+		saveToEEPROM();
 	}
 }
 

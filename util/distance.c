@@ -1,10 +1,3 @@
-/*
- * distance.c
- *
- * Created: 7-11-2020 18:47:06
- *  Author: woute
- */ 
-
 #define PIN_PD_TRIGGER 7
 #define PIN_PD_ECHO 6
 

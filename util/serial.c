@@ -1,9 +1,3 @@
-/*
- * serial.c
- *
- * Created: 29-10-2020 12:55:49
- *  Author: woute
- */ 
 
 #include "serial.h"
 #include "../settings.h"
