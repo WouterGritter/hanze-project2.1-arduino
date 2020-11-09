@@ -91,7 +91,7 @@ int main(void) {
 	SCH_Add_Task(readButtons, 0, 10);
 	SCH_Add_Task(readTemperatureSensor, 0, 1000);
 	SCH_Add_Task(readLightSensor, 0, 1000);
-	SCH_Add_Task(readDistanceSensor, 0, 500);
+	SCH_Add_Task(readDistanceSensor, 0, 200);
 	SCH_Add_Task(checkAutomaticStateChange, 1000, 30000);
 
 	// Signal that we're ready for serial commands..
