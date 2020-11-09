@@ -88,7 +88,7 @@ int main(void) {
 	// SCH_Add_Task(function, delay, interval) - interval is in ms
 	SCH_Add_Task(updateLeds, 0, 50);
 	SCH_Add_Task(updateTM1638, 0, 50);
-	SCH_Add_Task(readButtons, 0, 10);
+	SCH_Add_Task(readButtons, 0, 50);
 	SCH_Add_Task(readTemperatureSensor, 0, 1000);
 	SCH_Add_Task(readLightSensor, 0, 1000);
 	SCH_Add_Task(readDistanceSensor, 0, 200);
@@ -258,7 +258,7 @@ void readTemperatureSensor() {
 	if(temperature == 0) {
 		temperature = reading;
 	}else{
-		temperature = lerp(temperature, reading, 0.15);
+		temperature = lerp(temperature, reading, 0.05);
 	}
 }
 
