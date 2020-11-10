@@ -12,8 +12,8 @@
 #include <avr/eeprom.h>
 
 // Define the right temperature sensor!
-//#define TEMP_LM35
-#define TEMP_TMP36
+#define TEMP_LM35
+//#define TEMP_TMP36
 
 // Pins
 #define PIN_PB_LED_CLOSED   0 // PB0 (pin 8)
@@ -139,16 +139,16 @@ void loadFromEEPROM() {
 	border_distance_close	= eeprom_read_word(8);	// 2 bytes
 	
 	// DEFAULTS
-	if(border_temperature == 0)
+	if(border_temperature == 0xFFFF)
 		border_temperature = 25.0;
 	
-	if(border_light == 0)
+	if(border_light == 0xFFFF)
 		border_light = 300;
 	
-	if(border_distance_open == 0)
+	if(border_distance_open == 0xFFFF)
 		border_distance_open = 50;
 	
-	if(border_distance_close == 0)
+	if(border_distance_close == 0xFFFF)
 		border_distance_close = 15;
 }
 
