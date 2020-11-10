@@ -11,6 +11,10 @@
 #include "util/distance.h"
 #include <avr/eeprom.h>
 
+// Define the right temperature sensor!
+//#define TEMP_LM35
+#define TEMP_TMP36
+
 // Pins
 #define PIN_PB_LED_CLOSED   0 // PB0 (pin 8)
 #define PIN_PB_LED_CHANGING 1 // PB1 (pin 9)
@@ -254,7 +258,15 @@ void readTemperatureSensor() {
 	// Wait until the ADSC bit has been cleared
 	while(ADCSRA & (1 << ADSC));
 	
+	#ifdef TEMP_LM35
 	float reading = ((5.0 / 1023.0) * ADC) / 0.01; // 10mV per degree!
+	#endif
+	
+	#ifdef TEMP_TMP36
+	float reading = ((5000.0 / 1023.0) * ADC - 500.0) / 10.0; // Temp in °C = [(Vout in mV) - 500] / 10
+	#endif
+	
+	
 	if(temperature == 0) {
 		temperature = reading;
 	}else{
